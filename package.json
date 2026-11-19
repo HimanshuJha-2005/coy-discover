@@ -1,0 +1,41 @@
+{
+  "name": "coy-discover",
+  "version": "1.0.0",
+  "description": "Coy SDE Intern Assignment - Standalone Mobile-First Discover Swipe Deck with Relational SQLite and Zero-Leak Privacy",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "keywords": [
+    "coy",
+    "nextjs",
+    "swipe",
+    "framer-motion",
+    "sqlite",
+    "privacy-first"
+  ],
+  "author": "Himanshu Jha",
+  "license": "MIT",
+  "dependencies": {
+    "autoprefixer": "^10.4.20",
+    "better-sqlite3": "^11.5.0",
+    "framer-motion": "^11.11.11",
+    "lucide-react": "^0.454.0",
+    "next": "^14.2.15",
+    "postcss": "^8.4.47",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.14"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^20.17.6",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "typescript": "^5.6.3"
+  }
+}
