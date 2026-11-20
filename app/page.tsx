@@ -9,7 +9,7 @@ import { MatchModal } from '@/components/MatchModal';
 import { MatchesView } from '@/components/MatchesView';
 import { EmptyState } from '@/components/EmptyState';
 import { BottomNav, TabType } from '@/components/BottomNav';
-import { Heart, Sparkles, UserPlus } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 
 export default function CoyDiscoverApp() {
   const [feed, setFeed] = useState<Profile[]>([]);
@@ -118,7 +118,7 @@ export default function CoyDiscoverApp() {
   };
 
   return (
-    <main className="w-full max-w-[420px] h-[100dvh] md:h-[860px] md:max-h-[92vh] bg-slate-950 md:rounded-[36px] border-0 md:border-2 md:border-slate-800/80 shadow-2xl flex flex-col overflow-hidden relative">
+    <main className="w-full max-w-[420px] h-[100dvh] md:h-[860px] md:max-h-[92vh] bg-slate-50 md:rounded-[36px] border-0 md:border md:border-slate-300/80 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.12)] flex flex-col overflow-hidden relative">
       {/* Top Application Header */}
       <Header
         onReset={handleReset}
@@ -127,20 +127,20 @@ export default function CoyDiscoverApp() {
       />
 
       {/* Main Tab Content */}
-      <div className="flex-1 flex flex-col relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      <div className="flex-1 flex flex-col relative overflow-hidden bg-slate-50">
         {/* Tab 1: Home (Placeholder per assignment prompt) */}
         {activeTab === 'home' && (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-fadeIn">
-            <div className="w-16 h-16 rounded-2xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 mb-4 shadow-lg">
-              <UserPlus className="w-8 h-8" />
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50">
+            <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-[#FE3C72] mb-4 shadow-xs">
+              <UserPlus className="w-7 h-7" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Coy Home Tab</h3>
-            <p className="text-xs text-slate-400 max-w-xs mb-6 leading-relaxed">
-              This tab is reserved for Coy&apos;s direct phone/email crush list. Per the assignment instructions, this tab is kept as a placeholder while the full swipe functionality is built in the <strong className="text-pink-400">Discover</strong> tab.
+            <h3 className="text-lg font-bold text-slate-900 mb-1.5">Direct Crush List</h3>
+            <p className="text-xs text-slate-500 max-w-xs mb-6 leading-relaxed">
+              This tab is reserved for Coy&apos;s direct phone/email crush matching. Per the assignment specification, this tab is kept as a placeholder while the full swipe functionality is built in the <strong className="text-[#FE3C72]">Discover</strong> tab.
             </p>
             <button
               onClick={() => setActiveTab('discover')}
-              className="py-2.5 px-6 rounded-full bg-gradient-to-r from-pink-600 to-rose-600 text-white text-xs font-semibold shadow-lg shadow-pink-600/20 hover:scale-105 active:scale-95 transition-all"
+              className="py-2.5 px-6 rounded-full bg-[#FE3C72] hover:bg-[#E11D48] text-white text-xs font-semibold shadow-xs transition-all"
             >
               Open Discover Feed ({feed.length} left)
             </button>
@@ -149,11 +149,11 @@ export default function CoyDiscoverApp() {
 
         {/* Tab 2: Discover (Core Swipe Experience) */}
         {activeTab === 'discover' && (
-          <div className="flex-1 flex flex-col relative overflow-hidden">
+          <div className="flex-1 flex flex-col relative overflow-hidden bg-slate-50">
             {isLoadingFeed ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                <div className="w-10 h-10 border-4 border-pink-500/20 border-t-pink-500 rounded-full animate-spin mb-4" />
-                <p className="text-xs text-slate-400">Loading mock candidate profiles...</p>
+                <div className="w-8 h-8 border-3 border-rose-200 border-t-[#FE3C72] rounded-full animate-spin mb-3" />
+                <p className="text-xs text-slate-500">Loading candidate deck...</p>
               </div>
             ) : feed.length === 0 ? (
               <EmptyState
@@ -163,10 +163,10 @@ export default function CoyDiscoverApp() {
                 isResetting={isResetting}
               />
             ) : (
-              <div className="flex-1 flex flex-col">
+              <div className="flex-1 flex flex-col bg-slate-50">
                 {/* Card Stack Deck Area */}
                 <div className="flex-1 relative m-3 sm:m-4">
-                  {/* Background card preview for depth */}
+                  {/* Background card preview for natural depth */}
                   {feed.length > 1 && (
                     <Card
                       key={feed[1].id}

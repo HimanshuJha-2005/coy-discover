@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Coy Discover — Crush Matching & Discovery',
-  description: 'Mobile-first swipe-based discovery feature for Coy with zero-leak privacy and SQLite backend.',
+  description: 'Mobile-first swipe-based discovery feature for Coy.',
 };
 
 export const viewport: Viewport = {
@@ -19,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-slate-950 text-slate-100 flex items-center justify-center min-h-screen p-0 md:p-4">
+    <html lang="en">
+      <body className="bg-slate-100/90 text-slate-900 flex items-center justify-center min-h-screen p-0 md:p-6">
         {children}
       </body>
     </html>
