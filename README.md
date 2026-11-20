@@ -1,110 +1,34 @@
-# Coy SDE Intern Take-Home Assessment
-### Standalone Mobile-First "Discover" Tab & Part A Product Proposal
-**Candidate:** Himanshu Jha  
-**Role:** Software Engineering Intern (Backend / Systems)  
-**Parent Entity:** Fiquity Technology Private Limited (`getcoy.com` / `app.getcoy.com`)  
+# Coy Discover — Mobile-First Swipe Deck & Product Proposal
+
+> Standalone swipe discovery tab for **Coy** (`app.getcoy.com`), engineered with Next.js 14, Framer Motion gesture physics, and a relational SQLite backend enforcing strict Zero-Leak Privacy.
 
 ---
 
-## Quick Navigation
-* [Part A: Product Teardown & Two Core Feature Proposals](./PART_A_PRODUCT_PROPOSAL.md)
-* [System Architecture & The Zero-Leak Privacy Invariant](#core-engineering-highlights)
-* [Quickstart & Running Locally](#quickstart--running-locally)
-* [Automated Test Suite](#automated-test-suite)
-* [Backend API Documentation](#backend-api-documentation)
+## Visual Showcase
+
+| 1. Discover Swipe Deck | 2. "It's a Match!" Reveal | 3. Mutual Matches View |
+| :---: | :---: | :---: |
+| <img src="./public/screenshots/discover.png" width="250" alt="Discover Feed" /> | <img src="./public/screenshots/match.png" width="250" alt="Match Modal" /> | <img src="./public/screenshots/matches.png" width="250" alt="Matches View" /> |
 
 ---
 
-## Overview
+## Deliverables Summary
 
-This repository contains the complete submission for the **Coy SDE Intern Assignment**:
-1. **Part A (Written Proposal):** An in-depth product teardown analyzing user friction in Coy's existing SMS/WhatsApp crush invitation loop and proposing two high-leverage features: **"Circle Hints"** (to eliminate recipient spam skepticism and lift signup conversion) and **"Blind Icebreaker Cards"** (to eliminate post-match conversation paralysis). See full document in [PART_A_PRODUCT_PROPOSAL.md](./PART_A_PRODUCT_PROPOSAL.md).
-2. **Part B (Working Application):** A production-grade, mobile-first swipe-based **"Discover"** tab built with **Next.js 14**, **React 18**, **TypeScript**, **Tailwind CSS**, **Framer Motion**, and a relational **SQLite** backend with atomic transaction guarantees and automated regression tests.
+This repository contains the complete submission for the **Coy SDE Intern Take-Home Assessment**:
 
----
+1. **Part A: Product Teardown & Feature Proposals:** Full written proposal analyzing Coy's funnel drop-offs and proposing **Circle Hints** (raising invite-to-signup conversion) and **Blind Icebreaker Cards** (solving post-match conversation paralysis).  
+   👉 **Read the full proposal: [PART_A_PRODUCT_PROPOSAL.md](./PART_A_PRODUCT_PROPOSAL.md)**
 
-## Features Implemented
-
-| Requirement | Implementation Details |
-| :--- | :--- |
-| **Mobile-First Experience** | Centered modern smartphone viewport frame on desktop with device styling; expands to 100% native viewport on mobile devices. |
-| **30 Seeded Profiles** | 30 realistic, diverse mock candidate profiles with high-resolution portraits, Indian universities/cities, authentic bios, and interest tags. |
-| **Pre-Liked Demo Candidates** | Profiles (`prof_01`, `prof_03`, `prof_05`, `prof_07`, etc.) have already liked the logged-in user in SQLite, enabling instant demonstration of reciprocal matching. |
-| **Framer Motion Swipe Physics** | Buttery smooth touch drag gestures on mobile with dynamic rotation, resistance, and velocity tracking. Desktop action buttons (Pass / Like) and keyboard arrow shortcuts (`←` / `→`). |
-| **Dynamic Visual Feedback** | Real-time fading **LIKE** (green) and **PASS** (rose) stamps as cards are dragged, with spring physics restoring cards if released below threshold. |
-| **Swiped Profile Exclusion** | Once swiped (Like or Pass), a profile is permanently filtered out of future feed requests via a database-level anti-join query. |
-| **Zero-Leak Privacy Invariant** | `/api/feed` strictly returns only profile data. Inbound like status (`has_liked_you`) is **never** sent to the client, preventing browser DevTools inspection attacks. |
-| **"It's a Match!" Celebration** | Celebratory modal triggered *only* when reciprocal likes exist, displaying both avatars, college metadata, and action buttons. |
-| **Matches View** | Dedicated Matches tab displaying mutual connections, timestamps, and 1-click WhatsApp deep-links with pre-composed icebreaker messages. |
-| **Database Persistence** | Built on relational SQLite (`better-sqlite3` in WAL mode). All swipes and matches persist across browser reloads and server restarts. |
-| **1-Click Demo Reset** | Built-in reset button in header and empty state to instantly flush test swipes and re-seed the demo deck for effortless evaluation. |
+2. **Part B: Working Discover Tab Application:** A tactile, light-mode swipe deck featuring 30 seeded profiles, pre-liked candidate demo triggers, atomic match transactions, and persistent SQLite storage.
 
 ---
 
-## Core Engineering Highlights
-
-### 1. The Zero-Leak Privacy Guarantee (`GET /api/feed`)
-The core ethos of Coy is double-blind secrecy: *never reveal who liked the user unless it is mutual*.
-
-A common security vulnerability in junior implementations is calculating `has_liked_you: true` on the backend and sending it in the feed payload (relying on client-side UI to hide it). Any user opening Chrome DevTools or inspecting network payloads could immediately see who likes them.
-
-In this implementation, `GET /api/feed` enforces privacy at the SQL query level:
-```sql
-SELECT id, name, age, photo, bio, city_or_college, interests
-FROM profiles
-WHERE id NOT IN (
-  SELECT target_profile_id 
-  FROM swipes 
-  WHERE user_id = ?
-)
-AND id != ?
-ORDER BY id ASC;
-```
-* The query performs an anti-join against the `swipes` table for the current user.
-* It **never** joins against inbound swipes.
-* The response payload is mathematically incapable of leaking inbound crush interest.
-
-### 2. Atomic Transaction Match Engine (`POST /api/swipe`)
-Matching is handled inside an atomic SQLite transaction:
-```typescript
-const transaction = db.transaction(() => {
-  // 1. Record the swipe with upsert semantics
-  upsertSwipe.run(userId, targetProfileId, action);
-
-  if (action !== 'LIKE') {
-    return { isMatch: false };
-  }
-
-  // 2. Check for reciprocal like
-  const reciprocal = db.prepare(`
-    SELECT 1 FROM swipes
-    WHERE user_id = ? AND target_profile_id = ? AND action = 'LIKE'
-  `).get(targetProfileId, userId);
-
-  if (reciprocal) {
-    // 3. Insert canonical match record (user_1 < user_2)
-    const u1 = userId < targetProfileId ? userId : targetProfileId;
-    const u2 = userId < targetProfileId ? targetProfileId : userId;
-    insertMatch.run(u1, u2);
-
-    return { isMatch: true, matchProfile };
-  }
-
-  return { isMatch: false };
-});
-```
-* **Race Condition Prevention:** Because the reciprocal check and match insertion run in an isolated transaction, concurrent swipes cannot produce partial or duplicate match states.
-* **Canonical Unique Representation:** Matches enforce `user_1 < user_2` with a `UNIQUE(user_1, user_2)` constraint, preventing mirror duplicates `(A, B)` and `(B, A)`.
-
----
-
-## Quickstart & Running Locally
+## Quickstart (Run Locally in 30 Seconds)
 
 ### Prerequisites
 * Node.js v18+ (tested on Node v20 and v24)
 * npm v9+
 
-### Installation & Startup
 ```bash
 # 1. Clone repository
 git clone https://github.com/HimanshuJha-2005/coy-discover.git
@@ -117,120 +41,102 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
-> **Tip:** You can switch between the **Home** (placeholder), **Discover** (swipe deck), and **Matches** tabs using the bottom navigation bar. Use your keyboard `←` (Pass) and `→` (Like) arrows or swipe with your mouse/touchscreen.
+* **Swipe Controls:** Drag cards left (Pass) or right (Like) on touchscreen/mouse, or use desktop buttons and keyboard arrows (`←` Pass, `→` Like).
+* **Instant Demo Match:** The first candidate (`Ananya Sharma`) and 6 others have pre-liked the demo user. Swiping right immediately triggers the match celebration.
+* **1-Click Reset:** Click the reset icon in the top header or empty state to instantly restore all 30 profiles.
+
+---
+
+## Core Engineering Highlights
+
+### 1. The Zero-Leak Privacy Invariant (`GET /api/feed`)
+The core promise of Coy is total secrecy: *never reveal who liked the user unless it is mutual*.
+
+Returning `has_liked_you: true` in API payloads and hiding it via client CSS is a fatal privacy leak. Here, `GET /api/feed` enforces privacy at the SQL query level:
+
+```sql
+SELECT id, name, age, photo, bio, city_or_college, interests
+FROM profiles
+WHERE id NOT IN (
+  SELECT target_profile_id FROM swipes WHERE user_id = ?
+) AND id != ?
+ORDER BY id ASC;
+```
+
+* Executes an **anti-join** excluding previously swiped candidates.
+* **Never** joins against inbound likes.
+* The HTTP response payload is mathematically incapable of leaking who has liked the user.
+
+### 2. Atomic Transaction Match Engine (`POST /api/swipe`)
+Reciprocal matching runs inside an isolated SQLite transaction:
+
+```typescript
+const transaction = db.transaction(() => {
+  upsertSwipe.run(userId, targetProfileId, action);
+
+  if (action !== 'LIKE') return { isMatch: false };
+
+  const reciprocal = db.prepare(`
+    SELECT 1 FROM swipes WHERE user_id = ? AND target_profile_id = ? AND action = 'LIKE'
+  `).get(targetProfileId, userId);
+
+  if (reciprocal) {
+    // Canonical match ordering (user_1 < user_2) prevents mirror duplicate rows
+    const u1 = userId < targetProfileId ? userId : targetProfileId;
+    const u2 = userId < targetProfileId ? targetProfileId : userId;
+    insertMatch.run(u1, u2);
+    return { isMatch: true, matchProfile };
+  }
+
+  return { isMatch: false };
+});
+```
+
+* **Zero Race Conditions:** The check and insertion occur atomically.
+* **Canonical Uniqueness:** Enforces `UNIQUE(user_1, user_2)` where `user_1 < user_2`, preventing duplicate pairs `(A, B)` and `(B, A)`.
 
 ---
 
 ## Automated Test Suite
 
-A comprehensive test suite verifies all functional and privacy constraints:
+Run the 6 automated regression tests:
+
 ```bash
 npm test
 ```
 
-### Test Coverage Summary:
-* `✔ 1. Feed Anti-Join`: Verifies unswiped profiles are returned and swiped profiles are excluded.
-* `✔ 2. Zero-Leak Privacy`: Verifies feed payloads contain zero inbound like flags or leakage.
-* `✔ 3. Pass Action`: Verifies passing on a pre-liker does not generate a match and excludes them from feed.
-* `✔ 4. Non-Mutual Like`: Verifies one-sided likes do not create mutual match records.
-* `✔ 5. Mutual Like`: Verifies reciprocal likes atomically create mutual matches.
-* `✔ 6. Database Persistence`: Verifies swipes and matches persist across database reconnections.
+```text
+✔ 1. Feed Anti-Join: Returns all unswiped profiles (2.5ms)
+✔ 2. Zero-Leak Privacy: Feed query response contains no inbound like flags (1.0ms)
+✔ 3. Pass Action: Passing on a pre-liker does NOT create a match (0.8ms)
+✔ 4. Non-Mutual Like: Liking someone who has not liked you does NOT create a match (0.6ms)
+✔ 5. Mutual Like: Reciprocal likes create an atomic mutual match (3.1ms)
+✔ 6. Database Persistence: SQLite data persists across connection re-opens (12.7ms)
+```
 
 ---
 
-## Backend API Documentation
+## API Reference
 
-### 1. `GET /api/feed` (also available via `/feed`)
-Returns list of unswiped profiles for the active user.
-
-**Response:**
-```json
-{
-  "success": true,
-  "count": 30,
-  "profiles": [
-    {
-      "id": "prof_01",
-      "name": "Ananya Sharma",
-      "age": 21,
-      "photo": "https://images.unsplash.com/...",
-      "bio": "Architecture student...",
-      "cityOrCollege": "CEPT University, Ahmedabad",
-      "interests": ["Architecture", "Film Photography", "Coffee"]
-    }
-  ]
-}
-```
-
-### 2. `POST /api/swipe` (also available via `/swipe`)
-Records a user swipe action and evaluates mutual match conditions.
-
-**Request Body:**
-```json
-{
-  "targetProfileId": "prof_01",
-  "action": "LIKE" // or "PASS"
-}
-```
-
-**Response (Mutual Match):**
-```json
-{
-  "success": true,
-  "action": "LIKE",
-  "targetProfileId": "prof_01",
-  "isMatch": true,
-  "is_match": true,
-  "matchProfile": {
-    "id": "prof_01",
-    "name": "Ananya Sharma",
-    "age": 21,
-    "photo": "https://images.unsplash.com/...",
-    "cityOrCollege": "CEPT University, Ahmedabad"
-  }
-}
-```
-
-### 3. `GET /api/matches` (also available via `/matches`)
-Returns all mutual matches formed by the user.
-
-**Response:**
-```json
-{
-  "success": true,
-  "count": 1,
-  "matches": [
-    {
-      "id": 1,
-      "matchedAt": "2026-11-19T20:40:00Z",
-      "profile": {
-        "id": "prof_01",
-        "name": "Ananya Sharma",
-        "age": 21,
-        "photo": "https://images.unsplash.com/...",
-        "cityOrCollege": "CEPT University, Ahmedabad"
-      }
-    }
-  ]
-}
-```
-
-### 4. `POST /api/reset` (also available via `/reset`)
-Resets all swipes and re-seeds the demo state for evaluator convenience.
+| Method | Endpoint | Description | Key Parameters |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/feed` *(or `/feed`)* | Returns unswiped candidates for current user | `userId` (optional) |
+| `POST` | `/api/swipe` *(or `/swipe`)* | Records Like/Pass; returns match evaluation | `{ targetProfileId, action }` |
+| `GET` | `/api/matches` *(or `/matches`)* | Returns mutual matches with profile details | `userId` (optional) |
+| `POST` | `/api/reset` *(or `/reset`)* | Resets test swipes and re-seeds demo deck | None |
 
 ---
 
-## Tech Stack Summary
+## Tech Stack
 * **Framework:** Next.js 14 (App Router & Route Handlers)
 * **Frontend:** React 18, Tailwind CSS, Framer Motion (gesture physics)
-* **Icons:** Lucide React
 * **Database:** SQLite via `better-sqlite3` (WAL mode enabled)
-* **Testing:** Node.js native test runner (`node:test`, `node:assert/strict`)
+* **Icons:** Lucide React
+* **Testing:** Native Node.js test runner (`node:test`, `node:assert/strict`)
 
 ---
 
 **Author:** Himanshu Jha  
-**GitHub:** [https://github.com/HimanshuJha-2005](https://github.com/HimanshuJha-2005)  
-**LinkedIn:** [https://www.linkedin.com/in/himanshu-jha-728834337/](https://www.linkedin.com/in/himanshu-jha-728834337/)
+GitHub: [https://github.com/HimanshuJha-2005](https://github.com/HimanshuJha-2005) • LinkedIn: [https://www.linkedin.com/in/himanshu-jha-728834337/](https://www.linkedin.com/in/himanshu-jha-728834337/)
