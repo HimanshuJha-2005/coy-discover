@@ -32,5 +32,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# local test sqlite dbs (keep data/coy.db tracked or let it auto-create)
-data/test_*.db
+# local sqlite database files (auto-generated & seeded on startup)
+data/*.db
+data/*.db-wal
+data/*.db-shm
