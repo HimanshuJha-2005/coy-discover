@@ -6,9 +6,22 @@
 
 ## Visual Showcase
 
-| 1. Discover Swipe Deck | 2. "It's a Match!" Reveal | 3. Mutual Matches View |
+### 1. The Core Swiping Experience & Gesture Physics
+| 1. Discover Deck (30 Profiles) | 2. Mid-Drag Physics & Dynamic Stamp | 3. Instant Mutual Match Modal |
 | :---: | :---: | :---: |
-| <img src="./public/screenshots/discover.png" width="250" alt="Discover Feed" /> | <img src="./public/screenshots/match.png" width="250" alt="Match Modal" /> | <img src="./public/screenshots/matches.png" width="250" alt="Matches View" /> |
+| <img src="./public/screenshots/discover.png" width="240" alt="Discover Feed" /> | <img src="./public/screenshots/swipe_gesture.png" width="240" alt="Swipe Gesture" /> | <img src="./public/screenshots/match.png" width="240" alt="Match Modal" /> |
+
+### 2. Matches & Zero-Leak Anti-Join Verification
+| 4. Mutual Matches & 1-Click WhatsApp | 5. Anti-Join Empty State & 1-Click Reset |
+| :---: | :---: |
+| <img src="./public/screenshots/matches.png" width="240" alt="Matches View" /> | <img src="./public/screenshots/empty_state.png" width="240" alt="Empty State" /> |
+
+#### Storyboard Walkthrough:
+1. **Discover Deck:** Clean, tactile light-mode card deck with 30 seeded profiles, interest tags, and native mobile container.
+2. **Gesture Physics:** Smooth real-time card rotation (`-16°` to `+16°`) with dynamically interpolated LIKE (green) and PASS (red) stamps based on drag offset.
+3. **Double-Blind Match:** Swiping right on pre-liked candidate Ananya Sharma triggers the celebration modal with zero latency.
+4. **Mutual Matches Tab:** Shows verified mutual connections with instant 1-click WhatsApp deep-link icebreakers.
+5. **Zero-Leak Invariant & Reset:** Demonstrates that once profiles are swiped, the anti-join query completely excludes them, paired with an instantaneous 1-click re-seed button.
 
 ---
 
